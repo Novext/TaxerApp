@@ -13,12 +13,15 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.flipboard.bottomsheet.BottomSheetLayout;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -29,13 +32,18 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.vision.text.Text;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import okhttp3.Response;
@@ -49,7 +57,12 @@ public class MapsActivity extends AppCompatActivity
     private Button btnLocationMe;
     private GoogleApiClient mGoogleApiClient;
     private BottomSheetBehavior behavior;
-    SupportMapFragment mapFragment;
+    private SupportMapFragment mapFragment;
+    private TextView txtStops,txtName,txtPlate,txtTime;
+    private LocationRequest mLocationRequest;
+    private Location mLastLocation;
+    private Marker[] stops;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +76,7 @@ public class MapsActivity extends AppCompatActivity
 //        final Toolbar toolbar = (Toolbar) findViewById(R.id.gmail_toolbar);
 //        setSupportActionBar(toolbar);
 
+        txtStops = (TextView) findViewById(R.id.txtStops);
         btnLocationMe = (Button) findViewById(R.id.btnLocationMe);
 
         View bottomSheet = coordinatorLayout.findViewById(R.id.info_bottom_sheet);
@@ -82,6 +96,7 @@ public class MapsActivity extends AppCompatActivity
         btnLocationMe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                locationMe();
             }
         });
 
@@ -100,9 +115,40 @@ public class MapsActivity extends AppCompatActivity
         mGoogleApiClient.connect();
     }
 
-    LocationRequest mLocationRequest;
+    public void calculateTaxiStops(){
 
-    Location mLastLocation;
+    }
+
+    public void countTime(int minutes,int seconds){
+
+    }
+
+    public void getInfoStop(final String id){
+        new AsyncTask<Void,Void,Response>(){
+            @Override
+            protected Response doInBackground(Void... params) {
+                return okHttpRequest.get("/stop/"+id);
+            }
+
+            @Override
+            protected void onPostExecute(Response response) {
+                if(response!=null){
+                    if(response.code()==200){
+                        try{
+                            JSONObject info = new JSONObject(response.body().string());
+                            txtName.setText(info.getString("name"));
+                            txtPlate.setText(info.getString("plate"));
+                            txtTime.setText(info.getString("minutes") + ":" + info.getString("seconds"));
+                        }catch (Exception e){
+
+                        }
+                    }
+                }
+            }
+        }.execute(null,null,null);
+    }
+
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
@@ -116,6 +162,17 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     public void onLocationChanged(Location location) {
+        mLastLocation = location;
+        if(!flag){
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()), 5);
+            mMap.animateCamera(cameraUpdate);
+            flag = true;
+        }
+    }
+
+    public void locationMe(){
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()), 15);
+        mMap.animateCamera(cameraUpdate);
 
     }
 
@@ -157,11 +214,13 @@ public class MapsActivity extends AppCompatActivity
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
+    boolean flag = false;
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setMyLocationEnabled(true);
-        mMap.isMyLocationEnabled();
+//        mMap.setMyLocationEnabled(true);
+//        mMap.isMyLocationEnabled();
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -193,10 +252,28 @@ public class MapsActivity extends AppCompatActivity
         Marker melbourne = mMap.addMarker(new MarkerOptions()
                 .position(MELBOURNE)
                 .title("Melbourne")
-                .snippet("Population: 4,137,400"));
+                .snippet("Population: 4,137,400")
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.g849972)));
         // Add a marker in Sydney and move the camera
         //        getAllStopsAvailable();
 
+    }
+
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+            } else {
+                Log.i("Error", "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
     }
 
     public void getAllStopsAvailable(){

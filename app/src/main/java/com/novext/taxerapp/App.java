@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 /**
  * Created by angel on 9/30/16.
@@ -20,6 +21,9 @@ public class App extends Application {
         AppEventsLogger.activateApp(this);
         okHttpRequest = new OkHttpRequest("hostname");
         app = this;
+
+        FirebaseMessaging.getInstance().subscribeToTopic("stops");
+
     }
 
     public static App getInstance(){
