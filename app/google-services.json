@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "183276028487",
+    "firebase_url": "https://taxerapp.firebaseio.com",
+    "project_id": "taxerapp",
+    "storage_bucket": "taxerapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:183276028487:android:4a587debf07db5ff",
+        "android_client_info": {
+          "package_name": "com.novext.taxerapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "183276028487-jgr2ivjd6lh80cikah60sf06on7806nf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrvRSj6gP_cXEpd8FqqCiwKkohWENVzkw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,68 @@
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/coordinator"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--<android.support.design.widget.AppBarLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--&gt;-->
+
+        <!--<android.support.v7.widget.Toolbar-->
+            <!--android:id="@+id/gmail_toolbar"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="?attr/actionBarSize"-->
+            <!--android:background="@drawable/gradient_black"-->
+            <!--app:layout_scrollFlags="scroll|enterAlways" />-->
+    <!--</android.support.design.widget.AppBarLayout>-->
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            tools:context="com.novext.taxerapp.MapsActivity" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true">
+
+            <TextView
+                android:text="20 paradas cerca"
+                android:textAlignment="center"
+                android:background="#FFFF"
+                android:textColor="@color/colorPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/textView"
+                android:textSize="18dp"
+                android:layout_weight="1"
+                android:elevation="11dp"
+                android:gravity="center_vertical" />
+
+            <Button
+                android:text="Ubicame"
+                android:background="@color/colorPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textColor="#FFFFFF"
+                android:id="@+id/btnLocationMe"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+
+    <include layout="@layout/bottom_sheet"
+        android:id="@+id/info_bottom_sheet"/>
+</android.support.design.widget.CoordinatorLayout>
