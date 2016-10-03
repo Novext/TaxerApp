@@ -1,16 +1,23 @@
 package com.novext.taxerapp;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +29,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.flipboard.bottomsheet.BottomSheetLayout;
 import com.google.android.gms.common.ConnectionResult;
@@ -42,6 +50,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.vision.text.Text;
+import com.google.maps.android.ui.IconGenerator;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,6 +59,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import okhttp3.Response;
 
@@ -62,33 +73,42 @@ public class MapsActivity extends AppCompatActivity
     private GoogleApiClient mGoogleApiClient;
     private BottomSheetBehavior behavior;
     private SupportMapFragment mapFragment;
-    private TextView txtStops,txtName,txtPlate,txtTime;
+    private TextView txtStops,txtName,txtPlate,txtTime,txtCompany;
     private LocationRequest mLocationRequest;
     private Location mLastLocation;
     private Marker[] stops;
     private DrawerLayout Drawer;
-    private Toolbar toolbar;
     private ActionBarDrawerToggle mDrawerToggle;
-    private ImageButton imgMenu;
+    private ArrayList<Marker> stopsList;
 
+    private ImageButton imgMenu;
+    IconGenerator iconFactory;
+    boolean flag = false;
+
+    BroadcastReceiver mNotificationsReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        iconFactory = new IconGenerator(this);
+        iconFactory.setRotation(0);
+        iconFactory.setStyle(IconGenerator.STYLE_BLUE);
+
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         okHttpRequest = App.getInstanceOkHttpRequest();
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
-//        toolbar = (Toolbar) findViewById(R.id.gmail_toolbar);
-//        setSupportActionBar(toolbar);
 
         txtStops = (TextView) findViewById(R.id.txtStops);
         btnLocationMe = (Button) findViewById(R.id.btnLocationMe);
-
+        txtName = (TextView) findViewById(R.id.txtDriverName);
+        txtPlate = (TextView) findViewById(R.id.txtPlate);
+        txtCompany = (TextView) findViewById(R.id.txtCompany);
+        txtTime = (TextView) findViewById(R.id.txtTime);
         getAllStopsAvailable();
 
+        stopsList = new ArrayList();
         View bottomSheet = coordinatorLayout.findViewById(R.id.info_bottom_sheet);
         behavior = BottomSheetBehavior.from(bottomSheet);
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -130,12 +150,42 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
+        mNotificationsReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Bundle bundle = intent.getExtras();
+                final double latitude = Double.valueOf(bundle.getString("latitude"));
+                final double longitude = Double.valueOf(bundle.getString("longitude"));
+                final String _id = bundle.getString("_id");
+                final String description = bundle.getString("description");
+                final int minutes = Integer.valueOf(bundle.getString("minutes"));
+
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        setMarker(new LatLng(latitude,longitude),_id,description,minutes);
+                    }
+                });
+
+            }
+        };
+
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+
+
+    @Override
     protected void onStart() {
-        super.onStart();
         mGoogleApiClient.connect();
+        LocalBroadcastManager.getInstance(MapsActivity.this)
+                .registerReceiver(mNotificationsReceiver, new IntentFilter("notification"));
+        super.onStart();
     }
 
     public void calculateTaxiStops(){
@@ -147,15 +197,13 @@ public class MapsActivity extends AppCompatActivity
         Drawer = (DrawerLayout) findViewById(R.id.DrawerLayout);
         Drawer.setDrawerListener(mDrawerToggle);
     }
-    public void countTime(int minutes,int seconds){
 
-    }
 
     public void getInfoStop(final String id){
         new AsyncTask<Void,Void,Response>(){
             @Override
             protected Response doInBackground(Void... params) {
-                return okHttpRequest.get("/stop/"+id);
+                return okHttpRequest.get("/stops/"+id);
             }
 
             @Override
@@ -164,11 +212,11 @@ public class MapsActivity extends AppCompatActivity
                     if(response.code()==200){
                         try{
                             JSONObject info = new JSONObject(response.body().string());
-                            txtName.setText(info.getString("name"));
-                            txtPlate.setText(info.getString("plate"));
-                            txtTime.setText(info.getString("minutes") + ":" + info.getString("seconds"));
+                            txtName.setText(info.getJSONObject("taxidriver").getString("name") + " " + info.getJSONObject("taxidriver").getString("lastname"));
+                            txtPlate.setText(info.getJSONObject("taxidriver").getString("plate"));
+                            txtTime.setText(info.getJSONObject("stop").getString("minutes") + " : 00");
                         }catch (Exception e){
-
+                            Log.e("ERROR",e.toString());
                         }
                     }
                 }
@@ -192,8 +240,7 @@ public class MapsActivity extends AppCompatActivity
     public void onLocationChanged(Location location) {
         mLastLocation = location;
         if(!flag){
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()), 15);
-            mMap.animateCamera(cameraUpdate);
+            locationMe();
             flag = true;
         }
     }
@@ -202,6 +249,7 @@ public class MapsActivity extends AppCompatActivity
         if(mLastLocation!=null){
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()), 15);
             mMap.animateCamera(cameraUpdate);
+            addMarkerUser(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()));
         }
 
     }
@@ -226,8 +274,10 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     protected void onStop() {
-        super.onStop();
         if(mGoogleApiClient.isConnected()) mGoogleApiClient.disconnect();
+        LocalBroadcastManager.getInstance(MapsActivity.this)
+                .unregisterReceiver(mNotificationsReceiver);
+        super.onStop();
     }
 
     @Override
@@ -235,36 +285,28 @@ public class MapsActivity extends AppCompatActivity
 
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-
-    boolean flag = false;
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
-//        mMap.setMyLocationEnabled(true);
-//        mMap.isMyLocationEnabled();
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Projection proj = googleMap.getProjection();
-                int zoom = (int)mMap.getCameraPosition().zoom;
+                if(!marker.equals(userMarker)){
 
-                Point point = proj.toScreenLocation(marker.getPosition());
-                point.y = point.y +  mapFragment.getView().getMeasuredHeight()/(8*zoom);
-                LatLng position = proj.fromScreenLocation(point);
+                    Projection proj = googleMap.getProjection();
+                    int zoom = (int)mMap.getCameraPosition().zoom;
 
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
-                mMap.animateCamera(cameraUpdate);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    getInfoStop(marker.getSnippet());
+
+                    Point point = proj.toScreenLocation(marker.getPosition());
+                    point.y = point.y +  mapFragment.getView().getMeasuredHeight()/(8*zoom);
+                    LatLng position = proj.fromScreenLocation(point);
+
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
+                    mMap.animateCamera(cameraUpdate);
+                    behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
                 return true;
             }
         });
@@ -276,16 +318,6 @@ public class MapsActivity extends AppCompatActivity
                 behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
-
-        final LatLng MELBOURNE = new LatLng(-37.81319, 144.96298);
-
-        Marker melbourne = mMap.addMarker(new MarkerOptions()
-                .position(MELBOURNE)
-                .title("Melbourne")
-                .snippet("Population: 4,137,400")
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.g849972)));
-        // Add a marker in Sydney and move the camera
-        //        getAllStopsAvailable();
 
     }
 
@@ -324,7 +356,8 @@ public class MapsActivity extends AppCompatActivity
                             for (int i = 0; i < values.length(); i++) {
                                 LatLng latlng = new LatLng(values.getJSONObject(i).getDouble("latitude"),
                                         values.getJSONObject(i).getDouble("longitude"));
-                                setMarker(latlng,values.getJSONObject(i).getString("description"));
+                                setMarker(latlng,values.getJSONObject(i).getString("_id"),values.getJSONObject(i).getString("description"),
+                                        values.getJSONObject(i).getInt("minutes"));
                             }
                         }catch (Exception e){
                             Log.e("Exception",e.toString());
@@ -337,12 +370,37 @@ public class MapsActivity extends AppCompatActivity
         }.execute(null,null,null);
     }
 
-    public void setMarker(LatLng latLng,String description){
-        mMap.addMarker(new MarkerOptions()
-                .position(latLng)
-                .title(description)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.g849972)));
+    public void addStop(LatLng latLng,String description,int minutes,String _id){
 
     }
 
+    Marker userMarker;
+    public void addMarkerUser(LatLng latLng){
+        if(userMarker!=null){
+            userMarker.remove();
+        }
+
+        userMarker = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.marker_user)));
+
+
+    }
+
+    public void setMarker(LatLng latLng,String _id,String description,int minutes){
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .snippet(_id)
+                .title(description)
+                .anchor(iconFactory.getAnchorU(),iconFactory.getAnchorV())
+                .icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(minutes + " : 00"))));
+
+        stopsList.add(marker);
+        timer(marker,minutes);
+    }
+
+    public void timer(Marker marker,int minutes){
+        Timeout timeout = new Timeout(minutes,0,this,marker);
+        timeout.start(0,1000);
+    }
 }

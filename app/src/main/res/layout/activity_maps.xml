@@ -73,7 +73,8 @@
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@mipmap/ic_menu"
+                style="@android:style/Widget.Holo.Button.Borderless"
+                android:src="@mipmap/ic_menu"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
                 android:id="@+id/imgMenu" />
