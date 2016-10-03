@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home_fragment"
+            android:icon='@mipmap/ic_launcher'
+            android:title="Home"/>
+        <item
+            android:id="@+id/nav_first_fragment"
+            android:icon='@mipmap/ic_launcher'
+            android:title="Novedades"/>
+        <item
+            android:id="@+id/nav_second_fragment"
+            android:icon='@mipmap/ic_launcher'
+            android:title="Recorridos"/>
+        <item
+            android:id="@+id/nav_third_fragment"
+            android:icon='@mipmap/ic_launcher'
+            android:title="Mis Dietas"/>
+        <item
+            android:id="@+id/nav_four_fragment"
+            android:icon='@mipmap/ic_launcher'
+            android:title="Configuraciones"/>
+
+    </group>
+</menu>

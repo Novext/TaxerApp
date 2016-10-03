@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 /**
@@ -19,9 +20,10 @@ public class App extends Application {
         super.onCreate();
         FacebookSdk.sdkInitialize(getApplicationContext());
         AppEventsLogger.activateApp(this);
-        okHttpRequest = new OkHttpRequest("hostname");
+        okHttpRequest = new OkHttpRequest("https://taxerapi.herokuapp.com/");
         app = this;
 
+        FirebaseApp.initializeApp(this);
         FirebaseMessaging.getInstance().subscribeToTopic("stops");
 
     }

@@ -11,12 +11,16 @@ import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.flipboard.bottomsheet.BottomSheetLayout;
@@ -62,6 +66,10 @@ public class MapsActivity extends AppCompatActivity
     private LocationRequest mLocationRequest;
     private Location mLastLocation;
     private Marker[] stops;
+    private DrawerLayout Drawer;
+    private Toolbar toolbar;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private ImageButton imgMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,13 +79,15 @@ public class MapsActivity extends AppCompatActivity
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-//        okHttpRequest = App.getInstanceOkHttpRequest();
+        okHttpRequest = App.getInstanceOkHttpRequest();
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
-//        final Toolbar toolbar = (Toolbar) findViewById(R.id.gmail_toolbar);
+//        toolbar = (Toolbar) findViewById(R.id.gmail_toolbar);
 //        setSupportActionBar(toolbar);
 
         txtStops = (TextView) findViewById(R.id.txtStops);
         btnLocationMe = (Button) findViewById(R.id.btnLocationMe);
+
+        getAllStopsAvailable();
 
         View bottomSheet = coordinatorLayout.findViewById(R.id.info_bottom_sheet);
         behavior = BottomSheetBehavior.from(bottomSheet);
@@ -100,13 +110,26 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
+
+        if(checkPlayServices()){
+            if (mGoogleApiClient == null) {
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
+            }
         }
+        imgMenu = (ImageButton) findViewById(R.id.imgMenu);
+
+        setNavigationDrawer();
+        imgMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Drawer.openDrawer(Gravity.LEFT);
+            }
+        });
+
     }
 
     @Override
@@ -119,6 +142,11 @@ public class MapsActivity extends AppCompatActivity
 
     }
 
+
+    public void setNavigationDrawer(){
+        Drawer = (DrawerLayout) findViewById(R.id.DrawerLayout);
+        Drawer.setDrawerListener(mDrawerToggle);
+    }
     public void countTime(int minutes,int seconds){
 
     }
@@ -164,15 +192,17 @@ public class MapsActivity extends AppCompatActivity
     public void onLocationChanged(Location location) {
         mLastLocation = location;
         if(!flag){
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()), 5);
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()), 15);
             mMap.animateCamera(cameraUpdate);
             flag = true;
         }
     }
 
     public void locationMe(){
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()), 15);
-        mMap.animateCamera(cameraUpdate);
+        if(mLastLocation!=null){
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()), 15);
+            mMap.animateCamera(cameraUpdate);
+        }
 
     }
 
@@ -232,7 +262,7 @@ public class MapsActivity extends AppCompatActivity
                 point.y = point.y +  mapFragment.getView().getMeasuredHeight()/(8*zoom);
                 LatLng position = proj.fromScreenLocation(point);
 
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 5);
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
                 mMap.animateCamera(cameraUpdate);
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 return true;
@@ -290,14 +320,14 @@ public class MapsActivity extends AppCompatActivity
                     if(res.code()==200){
                         try{
 
-                            JSONArray values = new JSONArray(res);
+                            JSONArray values = new JSONArray(res.body().string());
                             for (int i = 0; i < values.length(); i++) {
                                 LatLng latlng = new LatLng(values.getJSONObject(i).getDouble("latitude"),
                                         values.getJSONObject(i).getDouble("longitude"));
                                 setMarker(latlng,values.getJSONObject(i).getString("description"));
                             }
-                        }catch (JSONException e){
-
+                        }catch (Exception e){
+                            Log.e("Exception",e.toString());
                         }
 
                     }
@@ -310,10 +340,9 @@ public class MapsActivity extends AppCompatActivity
     public void setMarker(LatLng latLng,String description){
         mMap.addMarker(new MarkerOptions()
                 .position(latLng)
-                .title(description));
+                .title(description)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.g849972)));
+
     }
-
-
-
 
 }

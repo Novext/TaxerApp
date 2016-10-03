@@ -41,7 +41,7 @@ public class OkHttpRequest {
                     .url(uri)
                     .get()
                     .build();
-            response = client.newCall(request).execute();
+            return client.newCall(request).execute();
         }catch (IOException e){
 
         }
@@ -58,8 +58,7 @@ public class OkHttpRequest {
                     .url(uri)
                     .post(body)
                     .build();
-            response = client.newCall(request).execute();
-            return response;
+            return client.newCall(request).execute();
         }catch (IOException e){
             Log.e("[Connection Error]",e.toString());
         }
@@ -75,8 +74,7 @@ public class OkHttpRequest {
                     .url(uri)
                     .put(body)
                     .build();
-            response = client.newCall(request).execute();
-            return response;
+            return client.newCall(request).execute();
         }catch (IOException e){
             Log.e("[Connection Error]",e.toString());
         }
