@@ -33,6 +33,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("_id", remoteMessage.getData().get("_id"));
         intent.putExtra("description",remoteMessage.getData().get("description"));
         intent.putExtra("minutes",remoteMessage.getData().get("minutes"));
+        intent.putExtra("seconds",remoteMessage.getData().get("seconds"));
         LocalBroadcastManager.getInstance(getApplicationContext())
                 .sendBroadcast(intent);
     }
