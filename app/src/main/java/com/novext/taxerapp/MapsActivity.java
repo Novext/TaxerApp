@@ -166,8 +166,10 @@ public class MapsActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         setMarker(new LatLng(latitude,longitude),_id,description,minutes,seconds);
+                        calculateTaxiStops();
                     }
                 });
+
 
             }
         };
@@ -192,6 +194,33 @@ public class MapsActivity extends AppCompatActivity
 
     public void calculateTaxiStops(){
 
+        final JSONObject values = new JSONObject();
+        try{
+            values.put("latitude",mLastLocation.getLatitude());
+            values.put("longitude",mLastLocation.getLongitude());
+        }catch (JSONException e){}
+
+        new AsyncTask<Void,Void,Response>(){
+            @Override
+            protected Response doInBackground(Void... params) {
+                return okHttpRequest.post(values.toString(),"/stops/count");
+            }
+
+            @Override
+            protected void onPostExecute(Response response) {
+                if(response!=null){
+                    if(response.code()==200){
+                        try{
+                            JSONObject info = new JSONObject(response.body().string());
+                            int count = info.getInt("count");
+                            txtStops.setText(count + " stops around you");
+                        }catch (Exception e){
+                            Log.e("ERROR",e.toString());
+                        }
+                    }
+                }
+            }
+        }.execute(null,null,null);
     }
 
 
@@ -245,6 +274,8 @@ public class MapsActivity extends AppCompatActivity
             locationMe();
             flag = true;
         }
+        calculateTaxiStops();
+
     }
 
     public void locationMe(){
@@ -372,9 +403,6 @@ public class MapsActivity extends AppCompatActivity
         }.execute(null,null,null);
     }
 
-    public void addStop(LatLng latLng,String description,int minutes,String _id){
-
-    }
 
     Marker userMarker;
     public void addMarkerUser(LatLng latLng){

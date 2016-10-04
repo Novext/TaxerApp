@@ -48,7 +48,7 @@
                 android:layout_alignParentEnd="true">
 
                 <TextView
-                    android:text="20 stops around me"
+                    android:text="0 stops around you"
                     android:textAlignment="center"
                     android:background="#FFFF"
                     android:textColor="@color/colorPrimary"
