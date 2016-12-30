@@ -48,7 +48,7 @@
                 android:layout_alignParentEnd="true">
 
                 <TextView
-                    android:text="20 paradas cerca"
+                    android:text="0 stops around you"
                     android:textAlignment="center"
                     android:background="#FFFF"
                     android:textColor="@color/colorPrimary"
@@ -61,13 +61,13 @@
                     android:gravity="center_vertical" />
 
                 <Button
-                    android:text="Ubicame"
+                    android:text="My location"
                     android:background="@color/colorPrimary"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:textColor="#FFFFFF"
                     android:id="@+id/btnLocationMe"
-                    android:layout_weight="1" />
+                    android:layout_weight="2" />
             </LinearLayout>
 
             <ImageButton

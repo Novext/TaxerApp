@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:fitsSystemWindows="true"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HOLA MUNDO"
+        android:id="@+id/title_pager_item"
+        android:scaleType="fitXY"
+        android:typeface="serif"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="-15dp"
+        android:adjustViewBounds="true"
+        android:clickable="false"
+        android:textAlignment="center"
+        android:textSize="22sp" />
+    <ImageView
+
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="-30dp"
+        android:layout_marginRight="15dp"
+        android:id="@+id/imgPager"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:src="@mipmap/ic_launcher" />
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HOLA MUNDO"
+        android:id="@+id/message_pager_item"
+        android:scaleType="fitXY"
+        android:typeface="serif"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="-15dp"
+        android:adjustViewBounds="true"
+        android:clickable="false"
+        android:textAlignment="center"
+        android:textSize="22sp" />
+</LinearLayout>

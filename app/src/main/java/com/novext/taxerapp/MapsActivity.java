@@ -159,13 +159,17 @@ public class MapsActivity extends AppCompatActivity
                 final String _id = bundle.getString("_id");
                 final String description = bundle.getString("description");
                 final int minutes = Integer.valueOf(bundle.getString("minutes"));
+                final int seconds = Integer.valueOf(bundle.getString("seconds"));
+
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
-                        setMarker(new LatLng(latitude,longitude),_id,description,minutes);
+                        setMarker(new LatLng(latitude,longitude),_id,description,minutes,seconds);
+                        calculateTaxiStops();
                     }
                 });
+
 
             }
         };
@@ -190,6 +194,33 @@ public class MapsActivity extends AppCompatActivity
 
     public void calculateTaxiStops(){
 
+        final JSONObject values = new JSONObject();
+        try{
+            values.put("latitude",mLastLocation.getLatitude());
+            values.put("longitude",mLastLocation.getLongitude());
+        }catch (JSONException e){}
+
+        new AsyncTask<Void,Void,Response>(){
+            @Override
+            protected Response doInBackground(Void... params) {
+                return okHttpRequest.post(values.toString(),"/stops/count");
+            }
+
+            @Override
+            protected void onPostExecute(Response response) {
+                if(response!=null){
+                    if(response.code()==200){
+                        try{
+                            JSONObject info = new JSONObject(response.body().string());
+                            int count = info.getInt("count");
+                            txtStops.setText(count + " stops around you");
+                        }catch (Exception e){
+                            Log.e("ERROR",e.toString());
+                        }
+                    }
+                }
+            }
+        }.execute(null,null,null);
     }
 
 
@@ -243,6 +274,8 @@ public class MapsActivity extends AppCompatActivity
             locationMe();
             flag = true;
         }
+        calculateTaxiStops();
+
     }
 
     public void locationMe(){
@@ -357,7 +390,7 @@ public class MapsActivity extends AppCompatActivity
                                 LatLng latlng = new LatLng(values.getJSONObject(i).getDouble("latitude"),
                                         values.getJSONObject(i).getDouble("longitude"));
                                 setMarker(latlng,values.getJSONObject(i).getString("_id"),values.getJSONObject(i).getString("description"),
-                                        values.getJSONObject(i).getInt("minutes"));
+                                        values.getJSONObject(i).getInt("minutes"),values.getJSONObject(i).getInt("seconds"));
                             }
                         }catch (Exception e){
                             Log.e("Exception",e.toString());
@@ -370,9 +403,6 @@ public class MapsActivity extends AppCompatActivity
         }.execute(null,null,null);
     }
 
-    public void addStop(LatLng latLng,String description,int minutes,String _id){
-
-    }
 
     Marker userMarker;
     public void addMarkerUser(LatLng latLng){
@@ -387,20 +417,20 @@ public class MapsActivity extends AppCompatActivity
 
     }
 
-    public void setMarker(LatLng latLng,String _id,String description,int minutes){
+    public void setMarker(LatLng latLng,String _id,String description,int minutes,int seconds){
         Marker marker = mMap.addMarker(new MarkerOptions()
                 .position(latLng)
                 .snippet(_id)
                 .title(description)
                 .anchor(iconFactory.getAnchorU(),iconFactory.getAnchorV())
-                .icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(minutes + " : 00"))));
+                .icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(minutes + " : " + seconds))));
 
         stopsList.add(marker);
-        timer(marker,minutes);
+        timer(marker,minutes,seconds);
     }
 
-    public void timer(Marker marker,int minutes){
-        Timeout timeout = new Timeout(minutes,0,this,marker);
+    public void timer(Marker marker,int minutes,int seconds){
+        Timeout timeout = new Timeout(minutes,seconds,this,marker);
         timeout.start(0,1000);
     }
 }
